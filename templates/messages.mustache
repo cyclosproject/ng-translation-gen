@@ -1,0 +1,16 @@
+{{#class}}
+import { Injectable } from '@angular/core';
+import { BaseMessages } from "./base-messages";
+
+@Injectable()
+export class {{name}} extends BaseMessages {
+  {{#methods}}
+  {{name}}({{#args}}{{name}}: string{{^last}}, {{/last}}{{/args}}) {
+    let obj = {{=<% %>=}}{<%={{ }}=%>
+      {{#args}}"{{name}}": {{name}}{{^last}}, {{/last}}{{/args}}
+    {{=<% %>=}}}<%={{ }}=%>
+    return super.translate('{{key}}', obj);
+  }
+  {{/methods}}
+}
+{{/class}}
