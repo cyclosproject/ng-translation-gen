@@ -120,7 +120,7 @@ import {SystemMessages} from 'app/messages/system-messages';
 @Component({
   selector: 'app-root',
     template: `
-    <h1>{{systemMesagges.greetings('Michael')}}</h1>
+    <h1>{{systemMessages.greetings('Michael')}}</h1>
   `
 })
 export class AppComponent {
