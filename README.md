@@ -12,7 +12,7 @@ an Angular 2 application:
 - Lack of possibility to translate a string that is not in a template but in code.
 - Change from diferents translations dinamically.
 
-## How to use it:
+## How to generate the classes:
 In your project, run:
 ```bash
 cd <your_angular2+_app_dir>
@@ -31,6 +31,115 @@ Where:
 
 Please, run the `ng-translation-gen` with the `--help` argument to view all
 available command line arguments.
+
+## How to use it in your angular project:
+Define a module as follow:
+```typescript
+import { BrowserModule } from '@angular/platform-browser';
+import { NgModule, Provider, APP_INITIALIZER } from '@angular/core';
+import { HttpModule, Http } from '@angular/http';
+
+import { SystemMessages } from 'app/messages/system-messages';
+import { AccessMessages } from 'app/messages/access-messages';
+
+
+import { AppComponent } from './app.component';
+
+import 'rxjs/add/operator/toPromise';
+
+/**
+ * This function will be executed when the application is initialized.
+ * It loads the system translations.
+ */
+export function loadSystemMessages(system: SystemMessages, http: Http): Function {
+  return () => http.get("assets/system-messages.json")
+    .toPromise()
+    .then(response => {
+      system.initialize(response.json());
+    })
+    .catch(e => alert(e));
+}
+
+const SYSTEM_MESSAGES: Provider = {
+  provide: APP_INITIALIZER,
+  useFactory: loadSystemMessages,
+  deps: [
+    SystemMessages, 
+    Http
+  ],
+  multi: true
+}
+
+/**
+ * This function will be executed when the application is initialized.
+ * It loads the access translations.
+ */
+export function loadAccessMessages(access: AccessMessages, http: Http): Function {
+  return () => http.get("assets/access-messages.json")
+    .toPromise()
+    .then(response => {
+      access.initialize(response.json());
+    })
+    .catch(e => alert(e));
+}
+
+const ACCESS_MESSAGES: Provider = {
+  provide: APP_INITIALIZER,
+  useFactory: loadAccessMessages,
+  deps: [
+    AccessMessages, 
+    Http
+  ],
+  multi: true
+}
+
+@NgModule({
+  declarations: [
+    AppComponent,
+  ],
+  imports: [
+    BrowserModule,
+    HttpModule
+  ],
+  bootstrap: [AppComponent],
+  providers: [
+    SystemMessages,
+    AccessMessages,
+    ACCESS_MESSAGES,
+    SYSTEM_MESSAGES
+  ]
+})
+export class AppModule { }
+```
+Now put this code in your component:
+```typescript
+import { Component } from '@angular/core';
+import {AccessMessages} from 'app/messages/access-messages';
+import {SystemMessages} from 'app/messages/system-messages';
+
+@Component({
+  selector: 'app-root',
+    template: `
+    <h1>{{systemMesagges.greetings('Michael')}}</h1>
+  `
+})
+export class AppComponent {
+  constructor(
+    public systemMessages: SystemMessages,
+    public accessMessages: AccessMessages,
+  ) {}
+}
+```
+Finally, if you ran the generator using this translation file:
+```json
+{
+  "greetings": "Welcome {user}"
+}
+```
+You will see get the following output: 
+```html
+<h1>Welcome Michael</h1>
+```
 
 ### Generated folder structure
 The folder `src/app/messages` (or your custom folder) will contain the following
