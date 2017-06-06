@@ -32,7 +32,7 @@ Where:
 Please, run the `ng-translation-gen` with the `--help` argument to view all
 available command line arguments.
 
-## How to use it in your angular project:
+## How to use it in your Angular project:
 Define a module as follow:
 ```typescript
 import { BrowserModule } from '@angular/platform-browser';
