@@ -7,7 +7,7 @@ export abstract class BaseMessages {
   private ARGS_RE: RegExp = /\{\w+\}/g;
   private NUMERICAL_ARGS_RE: RegExp = /\d+/;
   
-  private translations: Translations;
+  private translations: Translations = {};
 
   initialize(translations: Translations) {
     this.translations = translations;
@@ -33,7 +33,7 @@ export abstract class BaseMessages {
     return this.translations[key];
   }
 
-  protected translate(key: string, keyArgs: Object): string {
+  protected translate(key: string, params: Object = {}): string {
     let value = <string>this.translations[key]
     if (value === undefined) {
       return `???${key}???`;
@@ -44,7 +44,7 @@ export abstract class BaseMessages {
         if (this.NUMERICAL_ARGS_RE.test(paramName)) { 
           paramName = "arg" + paramName;
         }
-        return keyArgs[paramName];
+        return params[paramName];
       });
     }
   }
