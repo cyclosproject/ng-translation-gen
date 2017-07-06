@@ -115,6 +115,7 @@ function getTemplateModel(translations, className) {
     }
     let method = {
       "name": getValidIdentifier(key), 
+      "hasArgs": args.length > 0,
       "args": args,
       "key": key
     };

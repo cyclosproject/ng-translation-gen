@@ -4,13 +4,16 @@ import { BaseMessages } from "./base-messages";
 
 @Injectable()
 export class {{name}} extends BaseMessages {
+
   {{#methods}}
   {{name}}({{#args}}{{name}}: string{{^last}}, {{/last}}{{/args}}) {
-    let obj = {{=<% %>=}}{<%={{ }}=%>
-      {{#args}}"{{name}}": {{name}}{{^last}}, {{/last}}{{/args}}
-    {{=<% %>=}}}<%={{ }}=%>
-    return super.translate('{{key}}', obj);
+    {{#hasArgs}}return super.translate('{{key}}', { {{#args}}
+      "{{name}}": {{name}}{{^last}}, {{/last}}{{/args}}
+    });
+{{/hasArgs}}{{^hasArgs}}return super.translate('{{key}}');
+    {{/hasArgs}}
   }
+
   {{/methods}}
 }
 {{/class}}
