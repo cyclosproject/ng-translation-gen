@@ -1,12 +1,12 @@
+/* tslint:disable */
 import { Injectable } from '@angular/core';
-
 
 export type Translations = { [key: string]: string };
 
 export abstract class BaseMessages {
   private ARGS_RE: RegExp = /\{\w+\}/g;
   private NUMERICAL_ARGS_RE: RegExp = /\d+/;
-  
+
   private translations: Translations = {};
 
   initialize(translations: Translations) {
@@ -14,12 +14,14 @@ export abstract class BaseMessages {
   }
 
   /**
-   * Retrun an array with all translation keys. 
+   * Retrun an array with all translation keys.
    */
   properties(): string[] {
-    let keys : string[] = [];
-    for (let p in this.translations) {
-      keys.push(p);
+    const keys: string[] = [];
+    for (const p in this.translations) {
+      if (this.translations.hasOwnProperty(p)) {
+        keys.push(p);
+      }
     }
 
     return keys;
@@ -34,15 +36,15 @@ export abstract class BaseMessages {
   }
 
   protected translate(key: string, params: Object = {}): string {
-    let value = <string>this.translations[key]
+    const value = <string>this.translations[key];
     if (value === undefined) {
       return `???${key}???`;
     } else {
       return value.replace(this.ARGS_RE, (substring: string, ...args: any[]) => {
         let paramName = substring.substring(1, substring.length - 1);
         // e.g in case of {0} the corresponding property is arg0
-        if (this.NUMERICAL_ARGS_RE.test(paramName)) { 
-          paramName = "arg" + paramName;
+        if (this.NUMERICAL_ARGS_RE.test(paramName)) {
+          paramName = 'arg' + paramName;
         }
         return params[paramName];
       });
