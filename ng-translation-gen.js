@@ -1,5 +1,7 @@
 'use strict';
 
+/* jshint -W083 */
+
 const fse = require('fs-extra');
 const path = require('path');
 const Mustache = require('mustache');
@@ -8,23 +10,23 @@ const Mustache = require('mustache');
 // E.g: {0}
 const ARGS_REG_EXP = /\{\w+\}/g;
 
-// Both regexp are used to get the method name from the translation key. 
+// Both regexp are used to get the method name from the translation key.
 // E.g: error.Invalid -> errorInvalid
-const UPPER_CASE_REG_EXP = /[A-Z]+/g
+const UPPER_CASE_REG_EXP = /[A-Z]+/g;
 const METHOD_REG_EXP = /[\. | \_ | \-]\w{1}/g;
 
 // Used get the generated TS file name from the TS class name
 // E.g: AccessMesagges -> access-messages.ts
-const FILE_REG_EXP = /[A-Z]{1}/g
+const FILE_REG_EXP = /[A-Z]{1}/g;
 
 /**
  * Main generation function
  */
 function ngTranslationGen(options) {
   // load class template
-  let template = fse.readFileSync(path.join(__dirname, options.templates, 
+  let template = fse.readFileSync(path.join(__dirname, options.templates,
     "messages.mustache"), "utf-8");
-  
+
   // empty or create the output dir if not exists
   fse.emptyDirSync(path.normalize(options.output));
 
@@ -33,16 +35,15 @@ function ngTranslationGen(options) {
   // at this moment we're using the array only to know if at least one class
   // was generated (a flag would be enought but remains for future use)
   let generatedClasses = [];
-  fileNames.forEach(fileName =>{
+  fileNames.forEach(fileName => {
     let onlyName = fileName.split('.')[0];
     if (!options.includeOnlyMappedFiles || typeof options.mapping[onlyName] !== 'undefined') {
       try {
         // load the translation file
-        let translations = JSON.parse(fse.readFileSync(path.join(options.input, 
-          fileName), "utf-8"));
-        
+        let translations = JSON.parse(fse.readFileSync(path.join(options.input, fileName), "utf-8"));
+
         // create the template's model
-        let className = getClassName(onlyName, options)
+        let className = getClassName(onlyName, options);
         let model = getTemplateModel(translations, className);
 
         // render the template according to the model
@@ -51,17 +52,16 @@ function ngTranslationGen(options) {
         // write the generated class
         let tsName = getTSFilename(className);
         fse.writeFileSync(path.join(options.output, tsName + ".ts"), code, "utf-8");
-        generatedClasses.push({"name": className, "fileName": tsName, "last": false});
+        generatedClasses.push({ "name": className, "fileName": tsName, "last": false });
       } catch (error) {
-        throw new Error("Generation aborted, error processing file: " + fileName
-          + " (" + error + ").");
+        throw new Error(`Generation aborted, error processing file: ${fileName} (${error}).`);
       }
     }
   });
   if (generatedClasses.length == 0) {
     console.log("Warning: No class was generated! Is this correct?");
   } else {
-    // finally, copy all artifacts required by the generated code to the output folder    
+    // finally, copy all artifacts required by the generated code to the output folder
     fse.copySync(path.join(__dirname, "base-messages.ts"), path.join(options.output, "base-messages.ts"));
   }
 }
@@ -80,23 +80,23 @@ function getTemplateModel(translations, className) {
   };
   let methods = [];
   for (let key in translations) {
-    let args = []
+    let args = [];
     let argsObject = {};
     //each match is of the form {argName} or {a_number}
     translations[key].replace(ARGS_REG_EXP, (match) => {
       // remove leading '{' and trailing '}' chars
       let paramName = match.substring(1, match.length - 1);
-      // if it is of the form {a_number0} then the resultant param name will be 
+      // if it is of the form {a_number0} then the resultant param name will be
       // prefixed with 'arg'
-      if (match.match(/\{\d+\}/)) { 
+      if (match.match(/\{\d+\}/)) {
         paramName = "arg" + paramName;
       }
       //avoid repeated
       if (!argsObject.hasOwnProperty(paramName)) {
         argsObject[paramName] = paramName;
-        args.push({"name": paramName, "last" : false});
+        args.push({ "name": paramName, "last": false });
       }
-    })    
+    });
     args.sort((a, b) => {
       let aName = a.name.toLowerCase();
       let bName = b.name.toLowerCase();
@@ -111,25 +111,25 @@ function getTemplateModel(translations, className) {
 
     // mark the last argument to avoid render a trailing comma
     if (args.length > 0) {
-      args[args.length - 1]["last"] = true;
+      args[args.length - 1].last = true;
     }
     let method = {
-      "name": getValidIdentifier(key), 
+      "name": getValidIdentifier(key),
       "hasArgs": args.length > 0,
       "args": args,
       "key": key
     };
 
-    methods.push(method)
+    methods.push(method);
   }
-  model["methods"] = methods;
+  model.methods = methods;
 
   return model;
 }
 
 /**
  * Returns the TS class name for the given translation file name using the mapping
- * defined in the options. If there is no mapping for the file then use the 
+ * defined in the options. If there is no mapping for the file then use the
  * capitalized version of the file name.
  */
 function getClassName(fileName, options) {
@@ -142,12 +142,12 @@ function getClassName(fileName, options) {
     }
     return identifier.charAt(0).toUpperCase() + identifier.substring(1);
   } else {
-    return options.mapping[fileName]
+    return options.mapping[fileName];
   }
 }
 
 /**
- * Return the dashed-case version for the given camel-case class name plus the 
+ * Return the dashed-case version for the given camel-case class name plus the
  * '.ts' suffix
  */
 function getTSFilename(className) {
@@ -167,7 +167,7 @@ function getValidIdentifier(name) {
   // more than one char in upper case is lower cased
   name = name.replace(UPPER_CASE_REG_EXP, (match) => match.length == 1 ? match : match.toLowerCase());
   // each char after a '.', '_' or '-' is upper cased
-  return name.replace(METHOD_REG_EXP, (match) => match.substring(1).toUpperCase())
+  return name.replace(METHOD_REG_EXP, (match) => match.substring(1).toUpperCase());
 }
 
 module.exports = ngTranslationGen;

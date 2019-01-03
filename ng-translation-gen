@@ -32,10 +32,10 @@ const schema = parseJSON(path.join(__dirname, SCHEMA));
 var argParser = new ArgumentParser({
   version: pkg.version,
   addHelp: true,
-  description: "Translation message accessors generator for Angular 2+ projects. "
-  + "Either a file named " + CONFIG + " should exist in the current directory "
-  + "or arguments can be specified. Also, a configuration file can be generated "
-  + "with all default values if --gen-config is specified."
+  description: "Translation message accessors generator for Angular 2+ projects. " +
+  "Either a file named " + CONFIG + " should exist in the current directory " +
+  "or arguments can be specified. Also, a configuration file can be generated " +
+  "with all default values if --gen-config is specified."
 });
 argParser.addArgument(
   ["-i", "--input"],
@@ -56,10 +56,10 @@ argParser.addArgument(
 argParser.addArgument(
   ["--gen-config"],
   {
-    help: "Generates the configuration file " + CONFIG + " "
-    + "in the current directory. No message accessor classes are generated. "
-    + "If input and output are specified, their values are stored in the "
-    + "generated file as well.",
+    help: "Generates the configuration file " + CONFIG +
+    " in the current directory. No message accessor classes are generated." +
+    " If input and output are specified, their values are stored in the" +
+    " generated file as well.",
     action: "storeTrue",
     dest: "genConfig"
   }
@@ -127,8 +127,8 @@ function askThenGenerateConfig() {
     input: process.stdin,
     output: process.stdout
   });
-  rl.question("The configuration file " + CONFIG + " already exists.\n"
-  + "Do you want to override it? [y/N]", (answer) => {
+  rl.question("The configuration file " + CONFIG + " already exists.\n" +
+  "Do you want to override it? [y/N]", (answer) => {
     if (answer == 'y' || answer == 'Y') {
       generateConfig();
     }
@@ -149,7 +149,7 @@ function setDefaults(options, schema) {
     }
   }
   if (!options.hasOwnProperty("mapping")) {
-      options["mapping"] = {};
+      options.mapping = {};
   }
 }
 
@@ -164,8 +164,8 @@ function run(options) {
   if (options.includeOnlyMappedFiles) {
     let isEmptyMapping = JSON.stringify(options.mapping) === JSON.stringify({});
     if (isEmptyMapping) {
-      console.log("Warning: There is nothing to generate. The mapping is empty "
-        + "and the 'includeOnlyMappedFiles' flag is true");  
+      console.log("Warning: There is nothing to generate. The mapping is empty " +
+        "and the 'includeOnlyMappedFiles' flag is true");
       process.exit(0);
     }
   }
