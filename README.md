@@ -210,9 +210,9 @@ The following is a simple example of a configuration file:
 ```
 
 ## Starting in watch mode
-Running `ng-translation-gen --watch` will keep watching modified files in the
-input directory and regenerating translations as the files are modified on disk.
-This can speed up development.
+Running `node_modules/.bin/ng-translation-gen --watch` will keep watching modified
+files in the input directory and regenerating translations as the files are modified
+on disk. This can speed up development.
 
 ## Setting up a node script
 Regardless If your Angular project was generated or is managed by
