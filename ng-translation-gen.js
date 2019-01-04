@@ -2,6 +2,7 @@
 
 /* jshint -W083 */
 
+const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path');
 const Mustache = require('mustache');
@@ -23,53 +24,46 @@ const FILE_REG_EXP = /[A-Z]{1}/g;
  * Main generation function
  */
 function ngTranslationGen(options) {
+  const fileNames = Object.keys(options.mapping || {});
+  if (fileNames.length === 0) {
+    console.warn("No translation classes were generated. Is this correct?");
+    return;
+  }
+
   // load templates
-  const loadTemplate = name => fse.readFileSync(path.join(__dirname, options.templates, name + ".mustache"), "utf-8");
+  const loadTemplate = name => fs.readFileSync(path.join(__dirname, "templates", name + ".mustache"), "utf-8");
   const templates = {};
   ['messages', 'class'].forEach(name => templates[name] = loadTemplate(name));
 
   // empty or create the output dir if not exists
   fse.emptyDirSync(path.normalize(options.output));
 
-  // iterates over each translation file
-  let fileNames = fse.readdirSync(options.input);
-  // at this moment we're using the array only to know if at least one class
-  // was generated (a flag would be enought but remains for future use)
-  let generatedClasses = [];
-  fileNames.forEach(fileName => {
-    let pos = fileName.lastIndexOf('.');
-    let onlyName = pos < 0 ? '' : fileName.substring(0, pos);
-    if (fileName.endsWith('.json') && options.mapping.hasOwnProperty(onlyName)) {
-      try {
-        // load the translation file
-        let translations = JSON.parse(fse.readFileSync(path.join(options.input, fileName), "utf-8"));
+  for (const fileName of fileNames) {
+    try {
+      // load the translation file
+      const content = fs.readFileSync(path.join(options.input, fileName));
+      let translations = JSON.parse(content, "utf-8");
 
-        // create the template's model
-        let className = getClassName(onlyName, options);
-        let model = getTemplateModel(translations, className);
+      // create the template's model
+      let className = options.mapping[fileName];
+      let model = getTemplateModel(translations, className);
 
-        // render the template according to the model
-        let code = Mustache.render(templates.messages, model, templates);
+      // render the template according to the model
+      let code = Mustache.render(templates.messages, model, templates);
 
-        // write the generated class
-        let tsName = getTSFilename(className);
-        let outFile = path.join(options.output, tsName + ".ts");
-        fse.writeFileSync(outFile, code, "utf-8");
-        console.info('Wrote ' + outFile);
-        generatedClasses.push({ "name": className, "fileName": tsName, "last": false });
-      } catch (error) {
-        const e1 = new Error(`Generation aborted, error processing file: ${fileName} (${error}).`);
-        e1.stack = error.stack;
-        throw e1;
-      }
+      // write the generated class
+      let tsName = getTSFilename(className);
+      let outFile = path.join(options.output, tsName + ".ts");
+      fs.writeFileSync(outFile, code, "utf-8");
+      console.info('Wrote ' + outFile);
+    } catch (error) {
+      const e1 = new Error(`Generation aborted, error processing file: ${fileName} (${error}).`);
+      e1.stack = error.stack;
+      throw e1;
     }
-  });
-  if (generatedClasses.length == 0) {
-    console.log("Warning: No class was generated! Is this correct?");
-  } else {
-    // finally, copy all artifacts required by the generated code to the output folder
-    fse.copySync(path.join(__dirname, 'static', "translations.ts"), path.join(options.output, "translations.ts"));
   }
+  // finally, copy all artifacts required by the generated code to the output folder
+  fs.copyFileSync(path.join(__dirname, 'static', "translations.ts"), path.join(options.output, "translations.ts"));
 }
 
 /**
@@ -116,16 +110,37 @@ function getTemplateModel(translations, className, path) {
         };
         if (positional) {
           positionalArgs[paramName] = param;
-          param.fullIdentifier = param.identifier;
         } else {
           namedArgs[paramName] = param;
-          param.fullIdentifier = '$.' + param.identifier;
         }
       });
 
-      // First add all positional args, in order
+      // Get both positional and named ards
       let positionalKeys = Object.keys(positionalArgs);
       let namedKeys = Object.keys(namedArgs);
+
+      // If there's a single named arg, we handle it as positional
+      if (namedKeys.length === 1) {
+        let key = namedKeys[0];
+        let arg = namedArgs[key];
+        arg.positional = true;
+        positionalKeys.push(key);
+        positionalArgs[key] = arg;
+        namedKeys = [];
+        namedArgs = {};
+      }
+
+      // Set the full identifier
+      for (let key of positionalKeys) {
+        let arg = positionalArgs[key];
+        arg.fullIdentifier = arg.identifier;
+      }
+      for (let key of namedKeys) {
+        let arg = namedArgs[key];
+        arg.fullIdentifier = '$.' + arg.identifier;
+      }
+
+      // First add all positional args, in order
       let args = Object.keys(positionalArgs).sort().map(name => positionalArgs[name]);
       if (namedKeys.length > 0) {
         args.push({
@@ -177,25 +192,6 @@ function getTemplateModel(translations, className, path) {
   }
 
   return model;
-}
-
-/**
- * Returns the TS class name for the given translation file name using the mapping
- * defined in the options. If there is no mapping for the file then use the
- * capitalized version of the file name.
- */
-function getClassName(fileName, options) {
-  if (typeof options.mapping[fileName] === 'undefined') {
-    // there is no mapping for the file then transform it to a valid identifier
-    // and capitalize it
-    let identifier = getValidIdentifier(fileName);
-    if (!identifier.endsWith(options.classSuffix)) {
-      identifier += options.classSuffix;
-    }
-    return identifier.charAt(0).toUpperCase() + identifier.substring(1);
-  } else {
-    return options.mapping[fileName];
-  }
 }
 
 /**

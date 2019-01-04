@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path');
 const ArgumentParser = require('argparse').ArgumentParser;
@@ -72,6 +73,16 @@ argParser.addArgument(
     dest: "genConfig"
   }
 );
+argParser.addArgument(
+  ["-w", "--watch"],
+  {
+    help: "Watches for changes in the input directory, re-generating files" +
+      " when source translations change",
+    action: "storeTrue",
+    dest: "watch"
+  }
+);
+
 var args = argParser.parseArgs();
 
 // The mapping is specified as file1=Class1:file2=Class2:...
@@ -99,7 +110,7 @@ if (args.genConfig) {
 } else {
   if (configExists) {
     // The configuration file exists, so read it
-    run(parseJSON(CONFIG));
+    run(parseJSON(CONFIG), args.watch);
   } else {
     // No configuration file. Show the usage and exit.
     argParser.parseArgs(["--help"]);
@@ -130,7 +141,7 @@ function generateConfig() {
 
   var json = JSON.stringify(options, null, 2);
   fse.writeFileSync(CONFIG, json, { encoding: "utf8" });
-  console.info("Wrote " + CONFIG);
+  console.info("Wrote configuration file " + CONFIG);
 }
 
 /**
@@ -171,7 +182,7 @@ function setDefaults(options, schema) {
 /**
  * Runs the ng-translation-gen generation
  */
-function run(options) {
+function run(options, watch) {
   // sets the default values for those properties not set in the options
   setDefaults(options, schema);
 
@@ -182,6 +193,22 @@ function run(options) {
 
   var ngTranslationGen = require("./ng-translation-gen.js");
   ngTranslationGen(options);
+
+  if (watch) {
+    console.info("Watching " + options.input + " for changes");
+    let fsWait = false;
+    fs.watch(options.input, (_event, filename) => {
+      if (filename) {
+        if (fsWait) {
+          return;
+        }
+        fsWait = setTimeout(() => {
+          fsWait = false;
+          ngTranslationGen(options);
+        }, 100);
+      }
+    });
+  }
 }
 
 function parseJSON(file) {

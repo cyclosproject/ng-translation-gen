@@ -12,9 +12,9 @@ export class {{className}} {
    * Initializes the translation values.
    * @param values The translations values.
    */
-  initialize(values: TranslationValues) {
-    this._translations.initialize(values || {});{{#nested}}
-    this._nested.{{property}}.initialize((values['{{property}}'] || {}) as TranslationValues);{{/nested}}
+  initialize(values: Object) {
+    this._translations.initialize((values || {}) as TranslationValues);{{#nested}}
+    this._nested.{{property}}.initialize(values['{{property}}'] || {});{{/nested}}
   }{{#direct}}
 
   /**

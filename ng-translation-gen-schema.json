@@ -24,11 +24,6 @@
       "additionalProperties": {
         "type": "string"
       }
-    },
-    "templates": {
-      "description": "Path to the folder containing the Mustache templates used to generate the clases.",
-      "type": "string",
-      "default": "templates"
     }
   }
 }
