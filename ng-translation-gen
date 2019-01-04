@@ -33,9 +33,9 @@ var argParser = new ArgumentParser({
   version: pkg.version,
   addHelp: true,
   description: "Translation message accessors generator for Angular 2+ projects. " +
-  "Either a file named " + CONFIG + " should exist in the current directory " +
-  "or arguments can be specified. Also, a configuration file can be generated " +
-  "with all default values if --gen-config is specified."
+    "Either a file named " + CONFIG + " should exist in the current directory " +
+    "or arguments can be specified. Also, a configuration file can be generated " +
+    "with all default values if --gen-config is specified."
 });
 argParser.addArgument(
   ["-i", "--input"],
@@ -54,17 +54,37 @@ argParser.addArgument(
   }
 );
 argParser.addArgument(
+  ["-m", "--mapping"],
+  {
+    help: schema.properties.mapping.description,
+    defaultValue: schema.properties.mapping.default,
+    dest: "mapping"
+  }
+);
+argParser.addArgument(
   ["--gen-config"],
   {
     help: "Generates the configuration file " + CONFIG +
-    " in the current directory. No message accessor classes are generated." +
-    " If input and output are specified, their values are stored in the" +
-    " generated file as well.",
+      " in the current directory. No message accessor classes are generated." +
+      " If input and output are specified, their values are stored in the" +
+      " generated file as well.",
     action: "storeTrue",
     dest: "genConfig"
   }
 );
 var args = argParser.parseArgs();
+
+// The mapping is specified as file1=Class1:file2=Class2:...
+if (args.mapping) {
+  var mapping = {};
+  for (let part of args.mapping.split(':')) {
+    let subparts = part.split('=');
+    let name = subparts[0].trim();
+    let value = (subparts[1] || '').trim();
+    mapping[name] = value;
+  }
+  args.mapping = mapping;
+}
 
 // Check the action
 var configExists = fse.existsSync(CONFIG);
@@ -77,13 +97,7 @@ if (args.genConfig) {
     generateConfig();
   }
 } else {
-  // if there was given some argument then execute from args
-  if (process.argv.length >= 3) {
-    // thre is no support to specify the mapping from command-line then force to
-    // to include all files.
-    args.includeOnlyMappedFiles = false;
-    run(args);
-  } else if (configExists) {
+  if (configExists) {
     // The configuration file exists, so read it
     run(parseJSON(CONFIG));
   } else {
@@ -109,12 +123,13 @@ function generateConfig() {
   if (args.output) {
     options.output = args.output;
   }
+  if (args.mapping) {
+    options.mapping = args.mapping;
+  }
   setDefaults(options, schema);
-  // force to include all files for the generated config
-  options.includeOnlyMappedFiles = false;
 
   var json = JSON.stringify(options, null, 2);
-  fse.writeFileSync(CONFIG, json, {encoding: "utf8"});
+  fse.writeFileSync(CONFIG, json, { encoding: "utf8" });
   console.info("Wrote " + CONFIG);
 }
 
@@ -128,12 +143,12 @@ function askThenGenerateConfig() {
     output: process.stdout
   });
   rl.question("The configuration file " + CONFIG + " already exists.\n" +
-  "Do you want to override it? [y/N]", (answer) => {
-    if (answer == 'y' || answer == 'Y') {
-      generateConfig();
-    }
-    rl.close();
-  });
+    "Do you want to override it? [y/N]", (answer) => {
+      if (answer == 'y' || answer == 'Y') {
+        generateConfig();
+      }
+      rl.close();
+    });
 }
 
 /**
@@ -149,7 +164,7 @@ function setDefaults(options, schema) {
     }
   }
   if (!options.hasOwnProperty("mapping")) {
-      options.mapping = {};
+    options.mapping = {};
   }
 }
 
@@ -160,15 +175,6 @@ function run(options) {
   // sets the default values for those properties not set in the options
   setDefaults(options, schema);
 
-  // check for valid configuration
-  if (options.includeOnlyMappedFiles) {
-    let isEmptyMapping = JSON.stringify(options.mapping) === JSON.stringify({});
-    if (isEmptyMapping) {
-      console.log("Warning: There is nothing to generate. The mapping is empty " +
-        "and the 'includeOnlyMappedFiles' flag is true");
-      process.exit(0);
-    }
-  }
   if (!fse.existsSync(options.input)) {
     console.log("Error: missing input folder: " + options.input);
     process.exit(1);

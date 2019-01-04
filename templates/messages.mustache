@@ -1,20 +1,9 @@
 /* tslint:disable */
-{{#class}}
 import { Injectable } from '@angular/core';
-import { BaseMessages } from "./base-messages";
+import { Translations, TranslationValues } from "./translations";
 
+/**
+ * Translation messages accessor
+ */
 @Injectable()
-export class {{name}} extends BaseMessages {
-
-  {{#methods}}
-  {{name}}({{#args}}{{name}}: string{{^last}}, {{/last}}{{/args}}) {
-    {{#hasArgs}}return super.translate('{{key}}', { {{#args}}
-      "{{name}}": {{name}}{{^last}}, {{/last}}{{/args}}
-    });
-{{/hasArgs}}{{^hasArgs}}return super.translate('{{key}}');
-    {{/hasArgs}}
-  }
-
-  {{/methods}}
-}
-{{/class}}
+{{>class}}

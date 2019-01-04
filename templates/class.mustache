@@ -1,0 +1,41 @@
+export class {{className}} {
+
+  private _translations: Translations = new Translations({{{path}}});{{#hasNested}}
+
+  private _nested = {
+{{#nested}}
+    {{property}}: new {{className}}(){{^last}},{{/last}}
+{{/nested}}
+  };{{/hasNested}}
+
+  /**
+   * Initializes the translation values.
+   * @param values The translations values.
+   */
+  initialize(values: TranslationValues) {
+    this._translations.initialize(values || {});{{#nested}}
+    this._nested.{{property}}.initialize((values['{{property}}'] || {}) as TranslationValues);{{/nested}}
+  }{{#direct}}
+
+  /**
+   * Returns the value of translation message for key `{{key}}`.
+   */
+  {{^hasArgs}}get {{/hasArgs}}{{name}}({{#args}}{{name}}: {{type}}{{^last}}, {{/last}}{{/args}}): string {
+    {{#hasArgs}}return this._translations.get('{{key}}', {{=<% %>=}}{<%={{ }}=%>{{#txArgs}}
+      {{identifier}}: {{fullIdentifier}}{{^last}},{{/last}}{{/txArgs}}
+    });
+{{/hasArgs}}{{^hasArgs}}return this._translations.get('{{key}}');
+    {{/hasArgs}}
+  }{{/direct}}{{#nested}}
+
+  /**
+   * Returns the nested accessor for translation messages in `{{property}}`.
+   */
+  get {{property}}(): {{className}} {
+    return this._nested.{{property}};
+  }{{/nested}}
+}
+
+{{#nested}}
+{{>class}}
+{{/nested}}

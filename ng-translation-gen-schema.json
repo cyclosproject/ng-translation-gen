@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/schema",
   "id": "https://github.com/cyclosproject/ng-swagger-gen/blob/master/ng-translation-gen-schema.json",
   "title": "Options for ng-translation-gen",
-  "description": "It reads a bunch of translations provided as JSON files and\ngenerates one accessor as an Angular @Inectable TypeScript class per file.",
+  "description": "Generates Angular's @Injectable classes to access translation messages from JSON.",
   "type": "object",
   "properties": {
     "$schema": {
@@ -11,7 +11,7 @@
     "input": {
       "description": "Folder containing the translation JSON files to read from.",
       "type": "string",
-      "default": "src/app/translations"
+      "default": "src/translations"
     },
     "output": {
       "description": "Folder where the generated TS clases will be placed.",
@@ -19,21 +19,11 @@
       "default": "src/app/messages"
     },
     "mapping": {
-      "description": "A mappig from translation file name to TS class name.",
+      "description": "A mapping from JSON file (without extension) to the TS class name. Must be in the form: file1=Class1:file2=Class2:...",
       "type": "object",
       "additionalProperties": {
         "type": "string"
       }
-    },
-    "includeOnlyMappedFiles": {
-      "description": "If true only the files present in the mapping property will be processed.",
-      "type": "boolean",
-      "default": true
-    },
-    "classSuffix": {
-      "description": "Suffix added to the generated class if not found in the mapping.",
-      "type": "string",
-      "default": "Messages"
     },
     "templates": {
       "description": "Path to the folder containing the Mustache templates used to generate the clases.",

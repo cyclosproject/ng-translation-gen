@@ -5,9 +5,9 @@ This project is a NPM module that generates TypeScript classes from a JSON file
 containing the translation keys used by an application.
 
 ## Rationale:
-The idea of this project is to overcome the problems we found regarding I18N in 
+The idea of this project is to overcome the problems we found regarding I18N in
 an Angular 2 application:
-- If using AOT compilation there is need for a separate application package for 
+- If using AOT compilation there is need for a separate application package for
   each language (and also serve each one separately).
 - Lack of possibility to translate a string that is not in a template but in code.
 - Change from diferents translations dinamically.
@@ -64,7 +64,7 @@ const SYSTEM_MESSAGES: Provider = {
   provide: APP_INITIALIZER,
   useFactory: loadSystemMessages,
   deps: [
-    SystemMessages, 
+    SystemMessages,
     Http
   ],
   multi: true
@@ -87,7 +87,7 @@ const ACCESS_MESSAGES: Provider = {
   provide: APP_INITIALIZER,
   useFactory: loadAccessMessages,
   deps: [
-    AccessMessages, 
+    AccessMessages,
     Http
   ],
   multi: true
@@ -136,7 +136,7 @@ Finally, if you ran the generator using this translation file:
   "greetings": "Welcome {user}"
 }
 ```
-You will see get the following output: 
+You will see get the following output:
 ```html
 <h1>Welcome Michael</h1>
 ```
@@ -157,13 +157,13 @@ project_root
 
 The files are:
 
-- **messages/translation*n*-messages.ts**: One file per JSON translation file 
-  in the input folder (or those mapped if a mapping is configured) and using the 
+- **messages/translation*n*-messages.ts**: One file per JSON translation file
+  in the input folder (or those mapped if a mapping is configured) and using the
   default class suffix.
 
 ## Using a configuration file
 On regular usage it is recommended to use a configuration file instead of
-passing command-line arguments to `ng-translation-gen`. The configuration file 
+passing command-line arguments to `ng-translation-gen`. The configuration file
 name is `ng-translation-gen.json`, and should be placed on the root folder of your
 NodeJS project. Besides allowing to omit the command-line arguments, using a
 configuration file allows a greater degree of control over the generation.
@@ -172,7 +172,7 @@ An accompanying JSON schema is also available, so the configuration file can be
 validated, and the IDE can autocomplete the file. If you have installed and
 saved the `ng-translation-gen` module in your node project, you can use a local copy
 of the JSON schema on `./node_modules/ng-translation-gen/ng-translation-gen-schema.json`.
-It is also possible to use the online version at 
+It is also possible to use the online version at
 `https://github.com/cyclosproject/ng-translation-gen/blob/master/ng-translation-gen-schema.json`.
 
 ### Generating the configuration file
@@ -190,15 +190,12 @@ with the property defaults, plus the input and output directories that were spec
 The supported properties in the JSON file are:
 
 - `input`: Folder containing the translation JSON files to read from.
-  Defaults to `src/app/translations`.
-- `output`: Folder where the generated TS clases will be placed. 
+  Defaults to `src/translations`.
+- `output`: Folder where the generated TS clases will be placed.
   Defaults to `src/app/messages`.
-- `mapping`: A mappig from translation file name to TS class name.
-- `includeOnlyMappedFiles`: If true only the files present in the mapping 
-  property will be processed. Defaults to true.
-- `classSuffix`: Suffix added to the generated class if not found in the mapping.
-  Defaults to `Messages`.
-- `templates`: Path to the folder containing the Mustache templates used to 
+- `mapping`: A mapping from JSON file (without extension) to the TS class name.
+  Must be in the form: `file1=Class1:file2=Class2:...`.
+- `templates`: Path to the folder containing the Mustache templates used to
   generate the clases.
 
 ### Configuration file example
@@ -215,8 +212,8 @@ The following is a simple example of a configuration file:
 }
 ```
 
-This will only read a file named `access` (whatever extension) from the 
-`src/assets` folder and the generated class (`MyAccessMessages`) will be saved 
+This will only read a file named `access` (whatever extension) from the
+`src/assets` folder and the generated class (`MyAccessMessages`) will be saved
 in `src/app/messages`.
 
 ## Setting up a node script
