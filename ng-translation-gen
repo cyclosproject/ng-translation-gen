@@ -82,6 +82,15 @@ argParser.addArgument(
     dest: "watch"
   }
 );
+argParser.addArgument(
+  ["--merge"],
+  {
+    help: "Merges the translation files for additional locales, from the" +
+      " source locale",
+    action: "storeTrue",
+    dest: "merge"
+  }
+);
 
 var args = argParser.parseArgs();
 
@@ -108,12 +117,19 @@ if (args.genConfig) {
     generateConfig();
   }
 } else {
-  if (configExists) {
-    // The configuration file exists, so read it
-    run(parseJSON(CONFIG), args.watch);
+  const config = parseJSON(CONFIG);
+  if (args.merge) {
+    // Merge translations
+    merge(config);
   } else {
-    // No configuration file. Show the usage and exit.
-    argParser.parseArgs(["--help"]);
+    // Main execution
+    if (configExists) {
+      // The configuration file exists, so read it
+      run(config, args.watch);
+    } else {
+      // No configuration file. Show the usage and exit.
+      argParser.parseArgs(["--help"]);
+    }
   }
 }
 
@@ -182,10 +198,7 @@ function setDefaults(options, schema) {
   }
 }
 
-/**
- * Runs the ng-translation-gen generation
- */
-function run(options, watch) {
+function preprocess(options) {
   // sets the default values for those properties not set in the options
   setDefaults(options, schema);
 
@@ -193,6 +206,13 @@ function run(options, watch) {
     console.log("Error: missing input folder: " + options.input);
     process.exit(1);
   }
+}
+
+/**
+ * Runs the ng-translation-gen generation
+ */
+function run(options, watch) {
+  preprocess(options);
 
   var ngTranslationGen = require("./ng-translation-gen.js");
   ngTranslationGen(options);
@@ -207,11 +227,22 @@ function run(options, watch) {
         }
         fsWait = setTimeout(() => {
           fsWait = false;
-          ngTranslationGen(options);
+          try {
+            ngTranslationGen(options);
+          } catch (e) {
+            console.error("Error generating translations");
+            console.dir(e);
+          }
         }, 100);
       }
     });
   }
+}
+
+function merge(options) {
+  preprocess(options);
+  var mergeTranslations = require("./merge-translations.js");
+  mergeTranslations(options);
 }
 
 function parseJSON(file) {

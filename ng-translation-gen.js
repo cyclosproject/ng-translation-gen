@@ -24,9 +24,9 @@ const FILE_REG_EXP = /[A-Z]{1}/g;
  * Main generation function
  */
 function ngTranslationGen(options) {
-  const fileNames = Object.keys(options.mapping || {});
-  if (fileNames.length === 0) {
-    console.warn("No translation classes were generated. Is this correct?");
+  const mapping = Object.keys(options.mapping || {});
+  if (mapping.length === 0) {
+    console.warn("No mapping specified");
     return;
   }
 
@@ -43,7 +43,7 @@ function ngTranslationGen(options) {
   const localesModel = getLocalesModel(locales);
   const additionalLocalesModel = localesModel.filter(l => l.locale !== defaultLocale);
 
-  for (const key of fileNames) {
+  for (const key of mapping) {
     let baseName = key;
     if (baseName.toLowerCase().endsWith('.json')) {
       baseName = baseName.substring(0, baseName.length - 5);
@@ -55,7 +55,7 @@ function ngTranslationGen(options) {
       let translations = JSON.parse(content, "utf-8");
 
       // create the template's model
-      let className = options.mapping[key];
+      let className = mapping[key];
       const model = getTemplateModel(translations, className, null, baseName, defaultLocale, localesModel, additionalLocalesModel);
       model.separator = options.separator;
 

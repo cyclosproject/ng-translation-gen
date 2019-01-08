@@ -218,9 +218,15 @@ The following is a simple example of a configuration file:
 ```
 
 ## Starting in watch mode
-Running `node_modules/.bin/ng-translation-gen --watch` will keep watching modified
-files in the input directory and regenerating translations as the files are modified
-on disk. This can speed up development.
+Running `node_modules/.bin/ng-translation-gen --watch` will keep watching
+modified files in the input directory and regenerating translations as the
+files are modified on disk. This can speed up development.
+
+## Merging localized translation files
+Running `node_modules/.bin/ng-translation-gen --merge` will process all
+locales set in the configuration file, and process translated file in the
+input directory, for each locale. Any missing keys are added, and any
+stale keys are removed.
 
 ## Setting up a node script
 Regardless If your Angular project was generated or is managed by
@@ -234,10 +240,13 @@ following `scripts` to your `package.json`:
 ```json
 {
   "scripts": {
+    "ng": "ng",
     "ng-translation-gen": "ng-translation-gen",
-    "ng": "ng-translation-gen",
     "start": "npm run ng-translation-gen && npm run ng -- serve",
-    "build": "npm run ng-translation-gen && npm run ng build -- -prod"
+    "build": "npm run ng-translation-gen && npm run ng -- build -prod"
   }
 }
 ```
+
+Notice that `npm run` requires double dashes (`--`) between the command and
+its arguments.
