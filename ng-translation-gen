@@ -137,6 +137,9 @@ function generateConfig() {
   if (args.mapping) {
     options.mapping = args.mapping;
   }
+  if (args.separator) {
+    options.separator = args.separator;
+  }
   setDefaults(options, schema);
 
   var json = JSON.stringify(options, null, 2);

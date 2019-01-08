@@ -38,15 +38,26 @@ function ngTranslationGen(options) {
   // empty or create the output dir if not exists
   fse.emptyDirSync(path.normalize(options.output));
 
-  for (const fileName of fileNames) {
+  const defaultLocale = options.defaultLocale || 'en';
+  const locales = (options.locales || []).length === 0 ? ['en'] : options.locales;
+  const localesModel = getLocalesModel(locales);
+  const additionalLocalesModel = localesModel.filter(l => l.locale !== defaultLocale);
+
+  for (const key of fileNames) {
+    let baseName = key;
+    if (baseName.toLowerCase().endsWith('.json')) {
+      baseName = baseName.substring(0, baseName.length - 5);
+    }
+    const fileName = baseName + '.json';
     try {
       // load the translation file
       const content = fs.readFileSync(path.join(options.input, fileName));
       let translations = JSON.parse(content, "utf-8");
 
       // create the template's model
-      let className = options.mapping[fileName];
-      let model = getTemplateModel(translations, className);
+      let className = options.mapping[key];
+      const model = getTemplateModel(translations, className, null, baseName, defaultLocale, localesModel, additionalLocalesModel);
+      model.separator = options.separator;
 
       // render the template according to the model
       let code = Mustache.render(templates.messages, model, templates);
@@ -68,11 +79,8 @@ function ngTranslationGen(options) {
 
 /**
  * Return the model used to render the Mustache template.
- * @param translation the translations as a JSON object.
- * @param className the mapped class name for the translations file.
- * @param options the generator options
  */
-function getTemplateModel(translations, className, path) {
+function getTemplateModel(translations, className, path, baseName, defaultLocale, locales, additionalLocales) {
 
   let model = {
     className: className,
@@ -80,7 +88,13 @@ function getTemplateModel(translations, className, path) {
     nested: [],
     last: false,
     hasNested: false,
-    path: path
+    path: path,
+    // Below are properties which are only set for root models
+    root: path == null || path === '',
+    baseName: baseName,
+    defaultLocale: defaultLocale,
+    locales: locales,
+    additionalLocales: additionalLocales,
   };
   const allKeys = Object.keys(translations);
 
@@ -192,6 +206,22 @@ function getTemplateModel(translations, className, path) {
   }
 
   return model;
+}
+
+/**
+ * Returns the models for each locale
+ */
+function getLocalesModel(locales) {
+  const results = locales.map(l => {
+    return {
+      locale: l,
+      last: false
+    };
+  });
+  if (results.length > 0) {
+    results[results.length - 1].last = true;
+  }
+  return results;
 }
 
 /**

@@ -21,7 +21,7 @@ In your project, run:
 ```bash
 cd <your_angular2+_app_dir>
 npm install ng-translation-gen --save-dev
-node_modules/.bin/ng-translation-gen [-i input_dir] [-o output_dir] [-m source.json=ClassName[:source2.json=ClassName2]...]
+node_modules/.bin/ng-translation-gen [-i input_dir] [-o output_dir] [-m source=ClassName[:source2=ClassName2]...]
 ```
 Where:
 
@@ -34,7 +34,7 @@ Where:
   `src/app/messages`;
 - `mapping` contains the JSON file name (inside the given input dir) and the
   generated class name (on the output dir), in the form 
-  `file1.json=Class1:file2.json=Class2`.
+  `file1=Class1:file2=Class2`.
 
 Please, run the `ng-translation-gen` with the `--help` argument to view all
 available command line arguments.
@@ -177,7 +177,7 @@ To generate a configuration file, run the following in the root folder of
 your project;
 
 ```bash
-ng-translation-gen --gen-config [-i input_dir] [-o output_dir] [-m source.json=ClassName[:source2.json=ClassName2]...]
+ng-translation-gen --gen-config [-i input_dir] [-o output_dir] [-m source=ClassName[:source2=ClassName2]...]
 ```
 
 This will generate the `ng-translation-gen.json` file in the current directory
@@ -190,8 +190,16 @@ The supported properties in the JSON file are:
   Defaults to `src/translations`;
 - `output`: Folder where the generated TS clases will be placed.
   Defaults to `src/app/messages`;
-- `mapping`: A mapping from JSON file (without extension) to the TS class name.
-  Must be in the form: `file1=Class1:file2=Class2:...`.
+- `mapping`: A mapping from a base name (JSON file without extension) to the TS
+  class name. Must be in the form: `file1=Class1:file2=Class2:...`;
+- `defaultLocale`: Identifier for the default locale, that means, the one which
+  the file name without locale specification follows. Defaults to `en`;
+- `locales`: Array with the list of locales for which the application should have
+  a translation;
+- `separator`: Separator used between the base name and the locale specification
+  used for files. Defaults to `.`. So, for example, if the base name is
+  `messages` and the locale is `pt-BR`, the final file would be named
+  `messages.pt-BR.json`.
 
 ### Configuration file example
 The following is a simple example of a configuration file:
@@ -202,9 +210,9 @@ The following is a simple example of a configuration file:
   "output": "src/app/messages",
   "includeOnlyMappedFiles": true,
   "mapping": {
-    "dashboard.json": "DashboardMessages",
-    "user.json": "UserMessages",
-    "admin.json": "AdminMessages"
+    "dashboard": "DashboardMessages",
+    "user": "UserMessages",
+    "admin": "AdminMessages"
   }
 }
 ```

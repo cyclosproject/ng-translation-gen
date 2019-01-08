@@ -1,5 +1,31 @@
 export class {{className}} {
 
+{{#root}}
+  /**
+  * Locales for which translations should be available
+  */
+  static locales(): string[] {
+    return [
+{{#locales}}      '{{locale}}'{{^last}},{{/last}}
+{{/locales}}
+    ];
+  }
+
+  /**
+   * Returns the file name which contains the translations for the given locale
+   */
+  static fileName(locale: string): string {
+    switch (locale) {
+{{#additionalLocales}}      case '{{locale}}': return '{{baseName}}{{{separator}}}{{locale}}.json';
+{{/additionalLocales}}
+      default: return '{{baseName}}.json';
+    }
+  }
+
+  /** Indicates whether the translation values have been initialized **/
+  initialized$ = new BehaviorSubject(false);
+
+{{/root}}
   private _translations: Translations = new Translations({{{path}}});{{#hasNested}}
 
   private _nested = {
@@ -14,7 +40,8 @@ export class {{className}} {
    */
   initialize(values: Object) {
     this._translations.initialize((values || {}) as TranslationValues);{{#nested}}
-    this._nested.{{property}}.initialize(values['{{property}}'] || {});{{/nested}}
+    this._nested.{{property}}.initialize(values['{{property}}'] || {});{{/nested}}{{#root}}
+    this.initialized$.next(true);{{/root}}
   }{{#direct}}
 
   /**

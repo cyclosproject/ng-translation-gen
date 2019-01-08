@@ -24,6 +24,26 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "defaultLocale": {
+      "description": "Default locale. The file name of the default locale doesn't include the locale.",
+      "type": "string",
+      "default": "en"
+    },
+    "locales": {
+      "description": "A list of locales which can be processed",
+      "default": [
+        "en"
+      ],
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "separator": {
+      "description": "File name separator between base name and locale",
+      "default": ".",
+      "type": "string"
     }
   }
 }
