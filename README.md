@@ -192,6 +192,8 @@ The supported properties in the JSON file are:
   Defaults to `src/app/messages`;
 - `mapping`: A mapping from a base name (JSON file without extension) to the TS
   class name. Must be in the form: `file1=Class1:file2=Class2:...`;
+- `argumentType`: Type for generated arguments. Defaults to `string`, but may be set
+   to more permissive types, such as `string | number` or even `any`.
 - `defaultLocale`: Identifier for the default locale, that means, the one which
   the file name without locale specification follows. Defaults to `en`;
 - `locales`: Array with the list of locales for which the application should have

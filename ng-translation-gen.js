@@ -42,6 +42,7 @@ function ngTranslationGen(options) {
   const locales = (options.locales || []).length === 0 ? ['en'] : options.locales;
   const localesModel = getLocalesModel(locales);
   const additionalLocalesModel = localesModel.filter(l => l.locale !== defaultLocale);
+  const argumentType = options.argumentType || 'string';
 
   for (const key of keys) {
     let baseName = key;
@@ -56,7 +57,7 @@ function ngTranslationGen(options) {
 
       // create the template's model
       let className = options.mapping[key];
-      const model = getTemplateModel(translations, className, null, baseName, defaultLocale, localesModel, additionalLocalesModel);
+      const model = getTemplateModel(translations, className, null, baseName, argumentType, defaultLocale, localesModel, additionalLocalesModel);
       model.separator = options.separator;
 
       // render the template according to the model
@@ -80,7 +81,7 @@ function ngTranslationGen(options) {
 /**
  * Return the model used to render the Mustache template.
  */
-function getTemplateModel(translations, className, path, baseName, defaultLocale, locales, additionalLocales) {
+function getTemplateModel(translations, className, path, baseName, argumentType, defaultLocale, locales, additionalLocales) {
 
   let model = {
     className: className,
@@ -118,7 +119,7 @@ function getTemplateModel(translations, className, path, baseName, defaultLocale
         let param = {
           name: paramName,
           identifier: getValidIdentifier(paramName),
-          type: 'string',
+          type: argumentType,
           last: false,
           lastTxArg: false
         };
@@ -159,7 +160,7 @@ function getTemplateModel(translations, className, path, baseName, defaultLocale
       if (namedKeys.length > 0) {
         args.push({
           name: '$',
-          type: `{${namedKeys.map(n => n + ': string').join(', ')}}`
+          type: `{${namedKeys.map(n => n + ': ' + argumentType).join(', ')}}`
         });
         let lastKey = namedKeys[namedKeys.length - 1];
         namedArgs[lastKey].lastTxArg = true;
@@ -196,7 +197,7 @@ function getTemplateModel(translations, className, path, baseName, defaultLocale
       const nestedPath = (path ? path + '.' + key : key);
       let nestedClass = getValidIdentifier(key);
       nestedClass = nestedClass.charAt(0).toUpperCase() + nestedClass.substring(1);
-      const nested = getTemplateModel(value, className + '$' + nestedClass, nestedPath);
+      const nested = getTemplateModel(value, className + '$' + nestedClass, nestedPath, null, argumentType);
       nested.property = key;
       nested.path = '\'' + nestedPath + '\'';
       model.nested.push(nested);

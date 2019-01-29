@@ -65,7 +65,7 @@ export class Translations {
         if (this.NUMERICAL_ARGS_RE.test(paramName)) {
           paramName = 'arg' + paramName;
         }
-        return params[paramName];
+        return String(params[paramName]);
       });
     }
   }
