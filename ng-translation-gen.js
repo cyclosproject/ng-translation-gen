@@ -117,7 +117,7 @@ function contentHash(fileName) {
 }
 
 /**
- * Return the model used to render the Mustache template.
+ * Return the model used to render the template.
  */
 function getTemplateModel(translations, className, path, baseName, argumentType) {
 
