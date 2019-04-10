@@ -5,7 +5,8 @@
 const fs = require('fs');
 const fse = require('fs-extra');
 const path = require('path');
-const Mustache = require('mustache');
+const Handlebars = require('handlebars');
+const crypto = require('crypto');
 
 // Used to find the get translations arguments.
 // E.g: {0}
@@ -30,10 +31,19 @@ function ngTranslationGen(options) {
     return;
   }
 
-  // load templates
-  const loadTemplate = name => fs.readFileSync(path.join(__dirname, "templates", name + ".mustache"), "utf-8");
+  // Read each template
   const templates = {};
-  ['messages', 'class'].forEach(name => templates[name] = loadTemplate(name));
+  const dir = path.join(__dirname, "templates");
+  for (const file of fs.readdirSync(dir)) {
+    if (file.endsWith('.handlebars')) {
+      const basename = file.substring(0, file.length - '.handlebars'.length);
+      const fullname = path.join(dir, file);
+      const content = String(fs.readFileSync(fullname));
+      const template = Handlebars.compile(content)
+      templates[basename] = template;
+      Handlebars.registerPartial(basename, template);
+    }
+  }
 
   // empty or create the output dir if not exists
   fse.emptyDirSync(path.normalize(options.output));
@@ -51,17 +61,33 @@ function ngTranslationGen(options) {
     }
     const fileName = baseName + '.json';
     try {
-      // load the translation file
-      const content = fs.readFileSync(path.join(options.input, fileName));
+      // Read the file content
+      const fullFilename = path.join(options.input, fileName);
+      const content = fs.readFileSync(fullFilename);
       let translations = JSON.parse(content, "utf-8");
 
-      // create the template's model
+      // Create the model
       let className = options.mapping[key];
-      const model = getTemplateModel(translations, className, null, baseName, argumentType, defaultLocale, localesModel, additionalLocalesModel);
+      const model = getTemplateModel(translations, className, null, baseName, argumentType);
+
+      // Set additional properties for the root model
+      model.defaultLocale = defaultLocale;
+      model.defaultFilename = fileName;
+      model.defaultHash = contentHash(fullFilename);
+      model.locales = locales;
+      // Make a copy of each additional locale model
+      model.additionalLocales = additionalLocalesModel.map(l => ({ ...l }));
+      // Add the hashes for each additional locale
+      model.additionalLocales.forEach(l => {
+        const localeFilename = baseName + options.separator + l.locale + '.json';
+        const localeFile = path.join(options.input, localeFilename);
+        l.filename = localeFilename;
+        l.hash = contentHash(localeFile);
+      });
       model.separator = options.separator;
 
-      // render the template according to the model
-      let code = Mustache.render(templates.messages, model, templates);
+      // Render the template
+      const code = templates.messages(model);
 
       // write the generated class
       let tsName = getTSFilename(className);
@@ -78,24 +104,31 @@ function ngTranslationGen(options) {
   fs.copyFileSync(path.join(__dirname, 'static', "translations.ts"), path.join(options.output, "translations.ts"));
 }
 
+function contentHash(fileName) {
+  let content;
+  try {
+    content = fs.readFileSync(fileName, {
+      encoding: 'utf-8'
+    });
+  } catch (e) {
+    return '';
+  }
+  return crypto.createHash('sha1').update(content, 'utf-8').digest('hex');
+}
+
 /**
  * Return the model used to render the Mustache template.
  */
-function getTemplateModel(translations, className, path, baseName, argumentType, defaultLocale, locales, additionalLocales) {
+function getTemplateModel(translations, className, path, baseName, argumentType) {
 
   let model = {
     className: className,
+    baseName: baseName,
     direct: [],
     nested: [],
-    last: false,
     hasNested: false,
     path: path,
-    // Below are properties which are only set for root models
-    root: path == null || path === '',
-    baseName: baseName,
-    defaultLocale: defaultLocale,
-    locales: locales,
-    additionalLocales: additionalLocales,
+    root: path == null || path === ''
   };
   const allKeys = Object.keys(translations);
 
@@ -120,7 +153,6 @@ function getTemplateModel(translations, className, path, baseName, argumentType,
           name: paramName,
           identifier: getValidIdentifier(paramName),
           type: argumentType,
-          last: false,
           lastTxArg: false
         };
         if (positional) {
@@ -168,24 +200,16 @@ function getTemplateModel(translations, className, path, baseName, argumentType,
         positionalArgs[positionalArgs.length - 1].lastTxArg = true;
       }
 
-      // mark the last argument to avoid render a trailing comma
-      if (args.length > 0) {
-        args[args.length - 1].last = true;
-      }
-
       // Add the direct property model
       model.direct.push({
         name: getValidIdentifier(key),
+        defaultValue: value.replace(/\n/g, '\\n').replace(/\*\//g, "* /"),
         hasArgs: args.length > 0,
-        last: false,
         args: args,
         txArgs: [...positionalKeys.map(k => positionalArgs[k]), ...namedKeys.map(k => namedArgs[k])],
         key: key
       });
     }
-
-    // Flag the last direct key
-    model.direct[model.direct.length - 1].last = true;
   }
 
   // Then process all nested models
@@ -202,8 +226,6 @@ function getTemplateModel(translations, className, path, baseName, argumentType,
       nested.path = '\'' + nestedPath + '\'';
       model.nested.push(nested);
     }
-    // Flag the last nested key
-    model.nested[model.nested.length - 1].last = true;
   }
 
   return model;
@@ -213,16 +235,7 @@ function getTemplateModel(translations, className, path, baseName, argumentType,
  * Returns the models for each locale
  */
 function getLocalesModel(locales) {
-  const results = locales.map(l => {
-    return {
-      locale: l,
-      last: false
-    };
-  });
-  if (results.length > 0) {
-    results[results.length - 1].last = true;
-  }
-  return results;
+  return locales.map(l => ({ locale: l }));
 }
 
 /**

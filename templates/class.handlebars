@@ -1,13 +1,13 @@
 export class {{className}} {
 
-{{#root}}
+  {{#root}}
   /**
-  * Locales for which translations should be available
-  */
+   * Locales for which translations should be available
+   */
   static locales(): string[] {
     return [
-{{#locales}}      '{{locale}}'{{^last}},{{/last}}
-{{/locales}}
+{{#locales}}      '{{.}}'{{^@last}},{{/@last}}
+      {{/locales}}
     ];
   }
 
@@ -16,22 +16,32 @@ export class {{className}} {
    */
   static fileName(locale: string): string {
     switch (locale) {
-{{#additionalLocales}}      case '{{locale}}': return '{{baseName}}{{{separator}}}{{locale}}.json';
-{{/additionalLocales}}
-      default: return '{{baseName}}.json';
+{{#additionalLocales}}      case '{{locale}}': return '{{filename}}';
+      {{/additionalLocales}}
+      default: return '{{defaultFilename}}';
+    }
+  }
+
+  /**
+   * Returns a hash for the file contents on the moment it was compiled
+   */
+  static contentHash(locale: string): string {
+    switch (locale) {
+{{#additionalLocales}}      case '{{locale}}': return '{{hash}}';
+      {{/additionalLocales}}
+      default: return '{{defaultHash}}';
     }
   }
 
   /** Indicates whether the translation values have been initialized **/
   initialized$ = new BehaviorSubject(false);
 
-{{/root}}
+  {{/root}}
   private _translations: Translations = new Translations({{{path}}});{{#hasNested}}
 
   private _nested = {
-{{#nested}}
-    {{property}}: new {{className}}(){{^last}},{{/last}}
-{{/nested}}
+{{#nested}}    {{property}}: new {{className}}(){{^@last}},{{/@last}}
+  {{/nested}}
   };{{/hasNested}}
 
   /**
@@ -46,13 +56,13 @@ export class {{className}} {
 
   /**
    * Returns the value of translation message for key `{{key}}`.
+   * Default value: `{{{defaultValue}}}`
    */
-  {{^hasArgs}}get {{/hasArgs}}{{name}}({{#args}}{{name}}: {{type}}{{^last}}, {{/last}}{{/args}}): string {
-    {{#hasArgs}}return this._translations.get('{{key}}', {{=<% %>=}}{<%={{ }}=%>{{#txArgs}}
-      {{identifier}}: {{fullIdentifier}}{{^last}},{{/last}}{{/txArgs}}
-    });
-{{/hasArgs}}{{^hasArgs}}return this._translations.get('{{key}}');
-    {{/hasArgs}}
+  {{^hasArgs}}get {{/hasArgs}}{{name}}({{#args}}{{name}}: {{type}}{{^@last}}, {{/@last}}{{/args}}): string {
+    {{#hasArgs}}return this._translations.get('{{key}}', {
+{{#txArgs}}      {{identifier}}: {{fullIdentifier}}{{^@last}},{{/@last}}
+{{/txArgs}}
+    });{{/hasArgs}}{{^hasArgs}}return this._translations.get('{{key}}');{{/hasArgs}}
   }{{/direct}}{{#nested}}
 
   /**
