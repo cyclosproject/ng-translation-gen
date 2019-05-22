@@ -45,12 +45,21 @@ export class {{className}} {
   };{{/hasNested}}
 
   /**
+   * Sets the default translations, that is, the values returned in case the specific
+   * keys are not found.
+   */
+  set defaultValues(defaultValues: Object) {
+    this._translations.defaultValues = defaultValues;{{#nested}}
+    this._nested.{{property}}.defaultValues = defaultValues['{{property}}'];{{/nested}}
+  }
+
+  /**
    * Initializes the translation values.
    * @param values The translations values.
    */
   initialize(values: Object) {
-    this._translations.initialize((values || {}) as TranslationValues);{{#nested}}
-    this._nested.{{property}}.initialize(values['{{property}}'] || {});{{/nested}}{{#root}}
+    this._translations.initialize(values);{{#nested}}
+    this._nested.{{property}}.initialize(values['{{property}}']);{{/nested}}{{#root}}
     this.initialized$.next(true);{{/root}}
   }{{#direct}}
 
