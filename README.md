@@ -76,9 +76,13 @@ import { Provider } from '@angular/compiler/src/core';
 /**
  * Factory function that loads the tranlations JSON before the application is initialized
  */
-export function initializeMessages(http: HttpClient, messages: Messages): Function {
+export function initializeMessages(
+  http: HttpClient, messages: Messages, locale: string): Function {
   return async () => {
-    const translations = await http.get('translations/messages.json').toPromise();
+    const defaultLocale = 'en';
+    const suffix = ((locale || defaultLocale) === 'en') ? '' : `.${locale}`;
+    const file = `translations/messages${suffix}.json`
+    const translations = await http.get(file).toPromise();
     return messages.initialize(translations);
   };
 }
@@ -228,7 +232,41 @@ files are modified on disk. This can speed up development.
 Running `node_modules/.bin/ng-translation-gen --merge` will process all
 locales set in the configuration file, and process translated file in the
 input directory, for each locale. Any missing keys are added, and any
-stale keys are removed.
+stale keys are removed. This operation is meant to be executed at build
+time, so the deployed files for all translations are all complete. If
+run at development time, the other translation files will be filled up
+with default values, and will be flagged by your SCM (such as GIT) for commit.
+For development time, another approach is recommended, as stated below.
+
+## Running the application in development while using incomplete translations
+When developing the application, if you use incomplete translations, you will
+see values as missing keys, such as `???key???`. Starting with version `0.5.0`
+it is possible to set default values, so on development the default values
+will be used for missing keys, at cost of another request (which is ok on
+development time). For this, before loading the translation values, load the
+default values, like this:
+
+```typescript
+/**
+ * Factory function that loads the tranlations JSON before the application is initialized
+ */
+export function initializeMessages(
+  http: HttpClient, messages: Messages, locale: string): Function {
+  return async () => {
+    const defaultFile = 'translations/messages.json';
+    // Initialize the defaults if running in development mode
+    if (isDevMode()) {
+      messages.defaultValues = await http.get(defaultFile).toPromise();
+    }
+    // Then fetch the translation values and initialize
+    const defaultLocale = 'en';
+    const file = ((locale || defaultLocale) === 'en')
+      ? defaultFile : `translations/messages.${locale}.json`;
+    const translations = await http.get(file).toPromise();
+    return messages.initialize(translations);
+  };
+}
+```
 
 ## Setting up a node script
 Regardless If your Angular project was generated or is managed by
