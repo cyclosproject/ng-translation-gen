@@ -44,7 +44,7 @@ function merge(baseName, options) {
       const removed = removeStale(baseValues, localeValues);
       if (added > 0 || removed > 0) {
         fs.writeFileSync(localeFile, JSON.stringify(localeValues, null, 2));
-        console.info(`Write ${localeFile} with ${added} new and ${removed} removed keys`);
+        console.info(`Wrote ${localeFile} with ${added} new and ${removed} removed keys`);
       } else {
         console.info(`File ${localeFile} is up-to-date`);
       }
