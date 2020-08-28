@@ -49,6 +49,7 @@ export class {{className}} {
    * keys are not found.
    */
   set defaultValues(defaultValues: Object) {
+    defaultValues = defaultValues || {};
     this._translations.defaultValues = defaultValues;{{#nested}}
     this._nested.{{property}}.defaultValues = defaultValues['{{property}}'];{{/nested}}
   }
@@ -58,6 +59,7 @@ export class {{className}} {
    * @param values The translations values.
    */
   initialize(values: Object) {
+    values = values || {};
     this._translations.initialize(values);{{#nested}}
     this._nested.{{property}}.initialize(values['{{property}}']);{{/nested}}{{#root}}
     this.initialized$.next(true);{{/root}}
