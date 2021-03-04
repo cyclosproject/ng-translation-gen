@@ -1,0 +1,60 @@
+/* tslint:disable */
+
+import { Translations } from './translations';
+import { {{className}} } from './{{filename}}';
+
+export class {{metaClassName}} {
+
+  /**
+   * Locales for which translations should be available
+   */
+  static locales(): string[] {
+    return [
+{{#locales}}      '{{.}}'{{^@last}},{{/@last}}
+      {{/locales}}
+    ];
+  }
+
+  /**
+   * Returns the file name which contains the translations for the given locale
+   */
+  static fileName(locale: string): string {
+    switch (locale) {
+{{#additionalLocales}}      case '{{locale}}': return '{{filename}}';
+      {{/additionalLocales}}
+      default: return '{{defaultFilename}}';
+    }
+  }
+
+  /**
+   * Returns a hash for the file contents on the moment it was compiled
+   */
+  static contentHash(locale: string): string {
+    switch (locale) {
+{{#additionalLocales}}      case '{{locale}}': return '{{hash}}';
+      {{/additionalLocales}}
+      default: return '{{defaultHash}}';
+    }
+  }
+
+  private static _instance: {{className}};
+
+  /**
+   * Returns the translations implementation.
+   * The result is cached.
+   */
+  static get(): {{className}} {
+    if (!{{metaClassName}}._instance) {
+      {{metaClassName}}._instance = this._tx{{className}}().object();
+    }
+    return {{metaClassName}}._instance;
+  }
+
+  private static _tx{{className}}(): Translations<any> {
+    const tx = new Translations();
+{{> txMethodBody }}
+  }
+
+{{#nested}}{{> nestedMethod }}{{/nested}}
+
+}

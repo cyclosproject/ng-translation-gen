@@ -1,0 +1,6 @@
+  private static _tx{{className}}(property: string): Translations<any> {
+    const tx = new Translations(property);
+{{> txMethodBody }}
+  }
+
+{{#nested}}{{> nestedMethod }}{{/nested}}

@@ -215,7 +215,13 @@ function run(options, watch) {
   preprocess(options);
 
   var ngTranslationGen = require("./ng-translation-gen.js");
-  ngTranslationGen(options);
+  try {
+    ngTranslationGen(options);
+  } catch (e) {
+    console.error("Error generating translations");
+    console.dir(e);
+    console.error(e.stack);
+  }
 
   if (watch) {
     console.info("Watching " + options.input + " for changes");
@@ -232,6 +238,7 @@ function run(options, watch) {
           } catch (e) {
             console.error("Error generating translations");
             console.dir(e);
+            console.error(e.stack);
           }
         }, 100);
       }

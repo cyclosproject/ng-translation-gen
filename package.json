@@ -17,7 +17,9 @@
     "fs-extra": "^7.0.1",
     "handlebars": "^4.7.6"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "rxjs": "^6.6.6"
+  },
   "directories": {},
   "homepage": "https://github.com/cyclosproject/ng-translation-gen#readme",
   "keywords": [

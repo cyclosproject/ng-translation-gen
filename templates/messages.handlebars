@@ -1,10 +1,16 @@
 /* tslint:disable */
-import { Injectable } from '@angular/core';
-import { Translations } from "./translations";
-import { BehaviorSubject } from 'rxjs';
+
+import { BehaviorSubject } from 'rxjs'
+import { InjectionToken, Provider } from '@angular/core';
+import { {{metaClassName}} } from './{{metaFilename}}';
+
+export const {{className}}InjectionToken = new InjectionToken<{{className}}>('{{className}}InjectionToken');
+export const {{className}}Provider: Provider = {
+    provide: {{className}}InjectionToken,
+    useFactory: () => {{metaClassName}}.get()
+};
 
 /**
- * Translation messages accessor
+ * Translation messages interface
  */
-@Injectable()
-{{>class}}
+{{>interface}}

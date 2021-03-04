@@ -1,0 +1,43 @@
+export interface {{{className}}} {
+
+  /**
+   * Observable that indicates when the translations have been initialized
+   */
+  initialized$: BehaviorSubject<boolean>;
+
+  /**
+   * Initializes the underlying translations
+   */
+  $initialize(translations: {[key: string]: any}): void;
+
+  /**
+   * Sets the default translations, which are used in case the actual translation isn't found
+   */
+  $defaults(defaults: {[key: string]: any}): void;
+
+{{#simple}}
+  /**
+   * Returns the value of translation message for key `{{{key}}}`.
+   * Default value: `{{{defaultValue}}}`
+   */
+  {{{name}}}: string;
+
+{{/simple}}{{#withArgs}}
+  /**
+   * Returns the value of translation message for key `{{{key}}}`.
+   * Default value: `{{{defaultValue}}}`
+   */
+  {{{name}}}({{#args}}{{name}}: {{type}}{{#unless @last}}, {{/unless}}{{/args}}): string;
+
+{{/withArgs}}{{#nested}}
+  /**
+   * Returns the nested accessor for translation messages in `{{{property}}}`.
+   */
+  {{{property}}}: {{{className}}};
+
+{{/nested}}
+}
+
+{{#nested}}
+{{>interface}}
+{{/nested}}
