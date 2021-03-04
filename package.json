@@ -1,6 +1,6 @@
 {
   "name": "ng-translation-gen",
-  "version": "0.5.2",
+  "version": "0.6.0",
   "description": "Translation wrapper generator for Angular 2+",
   "author": {
     "name": "Cyclos development team"
@@ -15,7 +15,7 @@
   "dependencies": {
     "argparse": "^1.0.10",
     "fs-extra": "^7.0.1",
-    "handlebars": "^4.7.6"
+    "handlebars": "^4.7.7"
   },
   "devDependencies": {
     "rxjs": "^6.6.6"
