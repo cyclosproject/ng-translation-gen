@@ -256,7 +256,7 @@ function getTemplateModel(translations, className, path, baseName, argumentType)
       // Add the direct property model
       const arr = args.length === 0 ? model.simple : positionalKeys.length > 0 ? model.positional : model.named;
       arr.push({
-        name: getValidIdentifier(key),
+        name: getValidIdentifier(key, false),
         key,
         defaultValue: value.replace(/\n/g, '\\n').replace(/\*\//g, "* /"),
         args: args,
