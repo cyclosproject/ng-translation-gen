@@ -56,6 +56,9 @@ const proxyHandler: ProxyHandler<any> = {
         const result = (...args: any[]) => {
           // When invoked as a function, replace parameters
           return translated.replace(/\{\w+\}/g, (substring: string) => {
+            if (args.length === 1 && typeof args[0] !== 'object') {
+              return String(args[0]);
+            }
             const paramName = substring.substring(1, substring.length - 1);
             if (/[0-9]+/.test(paramName)) {
               return String(args[parseInt(paramName, 10)]);
