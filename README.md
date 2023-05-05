@@ -46,7 +46,7 @@ usage with a configuration file, so the parameters don't need to be specified
 all the time.
 
 ## How it works
-Starting with version 1.0, given a file named `messages.json`, the following
+Given a file named `messages.json`, the following
 files are generated (replace `messages` with the input name):
 
 - `messages.ts`: Defines the interface with all accessors. Translation keys
