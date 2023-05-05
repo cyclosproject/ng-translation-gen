@@ -1,6 +1,6 @@
 /* tslint:disable */
 
-import { Translations } from './translations';
+import { createTranslations } from './translations';
 import { {{className}} } from './{{filename}}';
 
 export class {{metaClassName}} {
@@ -37,24 +37,13 @@ export class {{metaClassName}} {
     }
   }
 
-  private static _instance: {{className}};
+  private static _instance = createTranslations() as {{className}};
 
   /**
    * Returns the translations implementation.
-   * The result is cached.
    */
   static get(): {{className}} {
-    if (!{{metaClassName}}._instance) {
-      {{metaClassName}}._instance = this._tx{{className}}().object();
-    }
     return {{metaClassName}}._instance;
   }
-
-  private static _tx{{className}}(): Translations<any> {
-    const tx = new Translations();
-{{> txMethodBody }}
-  }
-
-{{#nested}}{{> nestedMethod }}{{/nested}}
 
 }
