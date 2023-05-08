@@ -8,145 +8,183 @@ import { BehaviorSubject } from "rxjs";
  */
 export type TranslationValues = { [key: string]: string | TranslationValues };
 
+interface Target {
+  initialized$: BehaviorSubject<boolean>;
+  $values?: TranslationValues | string;
+  $defaults?: TranslationValues | string;
+  $children?: Map<string, Target>;
+  $path: string | null;
+}
+
 /**
  * Handler for proxy calls
  */
 const proxyHandler: ProxyHandler<any> = {
+  apply(tx: Target, _this, args) {
+    // Being invoked to replace args
+    const value = actualValue(tx);
+    return typeof value === "string" ? replaceArgs(value, args) : value;
+  },
   set() {
     return false;
   },
-  get(tx, nameOrSymbol) {
+  get(tx: Target, nameOrSymbol) {
     switch (nameOrSymbol) {
-      case 'initialized$':
-        return () => { return tx.initialized$ };
-      case '$initialize':
-        return (values: TranslationValues) => { tx.values = values };
-      case '$defaults':
-        return (values: TranslationValues) => { tx.defaults = values };
-      case 'ngOnDestroy':
-        return () => { };
+      case "$path":
+        return () => tx.$path;
+      case "initialized$":
+        return () => tx.initialized$;
+      case "$initialize":
+        return (values: TranslationValues) => setValues(tx, values);
+      case "$defaults":
+        return (values: TranslationValues) => setDefaults(tx, values);
+      case "ngOnDestroy":
+      case "then":
+        return () => {};
+      case "toString":
+      case Symbol.toPrimitive:
+        // This is called like a simple property
+        return () => actualValue(tx);
+      default:
+        return getChild(tx, validIdentifier(nameOrSymbol));
     }
-    const hasValue = tx.values?.hasOwnProperty(nameOrSymbol);
-    const hasDefault = tx.defaults?.hasOwnProperty(nameOrSymbol);
-    const name = String(nameOrSymbol);
-    if (hasValue || hasDefault) {
-      // Is a valid property
-      const rawValue = tx.values?.[name];
-      const defaultValue = tx.defaults?.[name];
-      const value = rawValue ?? defaultValue;
-      if (typeof value === 'object') {
-        // Is a nested object. Return a nested proxy.
-        let nested = tx.children.get(name)
-        if (!nested) {
-          const txAndProxy = doCreateTranslations(tx, name);
-          const nestedTx = txAndProxy[0];
-          if (typeof rawValue === 'object') {
-            nestedTx.values = rawValue;
-          }
-          if (typeof defaultValue === 'object') {
-            nestedTx.defaults = defaultValue;
-          }
-          nested = txAndProxy[1];
-          tx.children.set(name, nested);
-        }
-        return nested;
-      } else {
-        const translated = String(value);
-        // Is a raw value. May be either a simple getter or a method
-        const result = (...args: any[]) => {
-          // When invoked as a function, replace parameters
-          return translated.replace(/\{\w+\}/g, (substring: string) => {
-            if (args.length === 1 && typeof args[0] !== 'object') {
-              return String(args[0]);
-            }
-            const paramName = substring.substring(1, substring.length - 1);
-            if (/[0-9]+/.test(paramName)) {
-              return String(args[parseInt(paramName, 10)]);
-            } else {
-              return String(args[0]?.[paramName] ?? '');
-            }
-          });
-        };
-        // When used directly, have the toString returning the raw value
-        result.toString = () => translated;
-        return result;
-      }
-    } else {
-      // Is invalid. Return a placeholder.
-      const fullName = tx.fullName;
-      return `???${fullName ? fullName + '.' : ''}${name}???`
-    }
-  }
+  },
 };
 
-/**
- * Contains values, and are the backing object of proxies
- */
-export class TranslationHolder {
-  constructor(
-    public parent?: TranslationHolder,
-    public name?: string) {
-  }
-  _values?: TranslationValues;
-  _defaults?: TranslationValues;
-  initialized = new BehaviorSubject(false);
-  children = new Map<string, TranslationHolder>();
+function validIdentifier(name: string | symbol) {
+  name = String(name);
+  // more than one char in upper case is lower cased
+  name = name.replace(/[A-Z]+/g, (match: string) =>
+    match.length == 1 ? match : match.toLowerCase()
+  );
+  // each char after a '.', '_' or '-' is upper cased
+  name = name.replace(/[\. | \_ | \-]\w{1}/g, (match: string) =>
+    match.substring(1).toUpperCase()
+  );
+  return name;
+}
 
-  get values(): TranslationValues | undefined {
-    return this._values;
-  }
+function replaceArgs(value: string, ...args: any[]) {
+  return value.replace(/\{\w+\}/g, (substring: string) => {
+    if (args.length === 1 && typeof args[0] !== "object") {
+      return String(args[0]);
+    }
+    const paramName = substring.substring(1, substring.length - 1);
+    if (/[0-9]+/.test(paramName)) {
+      return String(args[parseInt(paramName, 10)]);
+    } else {
+      return String(args[0]?.[paramName] ?? "");
+    }
+  });
+}
 
-  set values(v: TranslationValues | undefined) {
-    this._values = v;
-    if (v) {
-      for (const e of this.children.entries()) {
-        const name = e[0];
-        const sub = v[name];
-        if (sub && typeof sub === 'object') {
-          e[1].values = sub;
-        }
+function actualValue(tx: Target, name?: string) {
+  let result: TranslationValues | string | undefined;
+  const values = tx.$values;
+  if (values) {
+    result =
+      name && typeof values === "object"
+        ? values[name]
+        : !name && typeof values === "string"
+        ? values
+        : undefined;
+  }
+  if (!result) {
+    const defaults = tx.$defaults;
+    result =
+      name && typeof defaults === "object"
+        ? defaults[name]
+        : !name && typeof defaults === "string"
+        ? defaults
+        : undefined;
+  }
+  if (!result) {
+    const fullPath = [tx.$path, name].filter((p) => p).join(".");
+    result = `???${fullPath}???`;
+  }
+  return result;
+}
+
+function ensureValidKeys(values: string | TranslationValues): void {
+  if (typeof values !== "object") {
+    return;
+  }
+  const keys = Object.keys(values);
+  for (const key of keys) {
+    const valid = validIdentifier(key);
+    if (key !== valid) {
+      values[valid] = values[key];
+    }
+  }
+}
+
+function setValues(tx: Target, values: string | TranslationValues) {
+  ensureValidKeys(values);
+  tx.$values = values;
+  if (typeof values === "object") {
+    const children = tx.$children;
+    if (children) {
+      for (const entry of children.entries()) {
+        const name = entry[0];
+        setValues(entry[1], values[name]);
       }
     }
   }
+  tx.initialized$.next(true);
+}
 
-  get defaults(): TranslationValues | undefined {
-    return this._defaults;
-  }
-
-  set defaults(v: TranslationValues | undefined) {
-    this._defaults = v;
-    if (v) {
-      for (const e of this.children.entries()) {
-        const name = e[0];
-        const sub = v[name];
-        if (sub && typeof sub === 'object') {
-          e[1].defaults = sub;
-        }
+function setDefaults(tx: Target, defaults: string | TranslationValues) {
+  ensureValidKeys(defaults);
+  tx.$defaults = defaults;
+  if (typeof defaults === "object") {
+    const children = tx.$children;
+    if (children) {
+      for (const entry of children.entries()) {
+        const name = entry[0];
+        setDefaults(entry[1], defaults[name]);
       }
     }
   }
+}
 
-  get fullName() {
-    const parts: string[] = [];
-    let curr: TranslationHolder | undefined = this;
-    while (curr) {
-      if (curr.name) {
-        parts.unshift(curr.name);
-      }
-      curr = curr.parent;
-    }
-    return parts.length === 0 ? undefined : parts.join('.');
+function getChild(tx: Target, name: string) {
+  let children = tx.$children;
+  if (!children) {
+    children = tx.$children = new Map();
   }
+  let child = children.get(name);
+  if (!child) {
+    const pair = createProxy(tx.$path ? `${tx.$path}.${name}` : name);
+    child = pair[1];
+    const values = tx.$values;
+    if (values && typeof values === "object") {
+      const nested = values[name];
+      if (nested) {
+        setValues(pair[0], nested);
+      }
+    }
+    const defaults = tx.$defaults;
+    if (defaults && typeof defaults === "object") {
+      const nested = defaults[name];
+      if (nested) {
+        setDefaults(pair[0], nested);
+      }
+    }
+    children.set(name, child);
+  }
+  return child;
 }
 
 /**
  * Creates a proxy that behaves as the translations object
  */
 export function createTranslations(): any {
-  return doCreateTranslations(undefined, undefined)[1];
+  return createProxy(null)[1];
 }
 
-function doCreateTranslations(parent?: TranslationHolder, name?: string) {
-  const tx = new TranslationHolder(parent, name);
-  return [tx, new Proxy(tx, proxyHandler)] as const;
+function createProxy(path: string | null) {
+  const target = (() => null) as any as Target;
+  target.initialized$ = new BehaviorSubject(false);
+  target.$path = path;
+  return [target, new Proxy<Target>(target, proxyHandler)] as const;
 }
