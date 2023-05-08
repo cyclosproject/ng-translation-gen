@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* tslint:disable */
 
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject } from 'rxjs';
 
 /**
  * Container for translation values
@@ -23,25 +23,25 @@ const proxyHandler: ProxyHandler<any> = {
   apply(tx: Target, _this, args) {
     // Being invoked to replace args
     const value = actualValue(tx);
-    return typeof value === "string" ? replaceArgs(value, args) : value;
+    return typeof value === 'string' ? replaceArgs(value, args) : value;
   },
   set() {
     return false;
   },
   get(tx: Target, nameOrSymbol) {
     switch (nameOrSymbol) {
-      case "$path":
+      case '$path':
         return () => tx.$path;
-      case "initialized$":
+      case 'initialized$':
         return () => tx.initialized$;
-      case "$initialize":
+      case '$initialize':
         return (values: TranslationValues) => setValues(tx, values);
-      case "$defaults":
+      case '$defaults':
         return (values: TranslationValues) => setDefaults(tx, values);
-      case "ngOnDestroy":
-      case "then":
-        return () => {};
-      case "toString":
+      case 'ngOnDestroy':
+      case 'then':
+        return undefined;
+      case 'toString':
       case Symbol.toPrimitive:
         // This is called like a simple property
         return () => actualValue(tx);
@@ -54,26 +54,22 @@ const proxyHandler: ProxyHandler<any> = {
 function validIdentifier(name: string | symbol) {
   name = String(name);
   // more than one char in upper case is lower cased
-  name = name.replace(/[A-Z]+/g, (match: string) =>
-    match.length == 1 ? match : match.toLowerCase()
-  );
+  name = name.replace(/[A-Z]+/g, (match: string) => (match.length == 1 ? match : match.toLowerCase()));
   // each char after a '.', '_' or '-' is upper cased
-  name = name.replace(/[\. | \_ | \-]\w{1}/g, (match: string) =>
-    match.substring(1).toUpperCase()
-  );
+  name = name.replace(/[\. | \_ | \-]\w{1}/g, (match: string) => match.substring(1).toUpperCase());
   return name;
 }
 
-function replaceArgs(value: string, ...args: any[]) {
+function replaceArgs(value: string, args: any[]) {
   return value.replace(/\{\w+\}/g, (substring: string) => {
-    if (args.length === 1 && typeof args[0] !== "object") {
+    if (args.length === 1 && typeof args[0] !== 'object') {
       return String(args[0]);
     }
     const paramName = substring.substring(1, substring.length - 1);
     if (/[0-9]+/.test(paramName)) {
       return String(args[parseInt(paramName, 10)]);
     } else {
-      return String(args[0]?.[paramName] ?? "");
+      return String(args[0]?.[paramName] ?? '');
     }
   });
 }
@@ -83,30 +79,26 @@ function actualValue(tx: Target, name?: string) {
   const values = tx.$values;
   if (values) {
     result =
-      name && typeof values === "object"
-        ? values[name]
-        : !name && typeof values === "string"
-        ? values
-        : undefined;
+      name && typeof values === 'object' ? values[name] : !name && typeof values === 'string' ? values : undefined;
   }
   if (!result) {
     const defaults = tx.$defaults;
     result =
-      name && typeof defaults === "object"
+      name && typeof defaults === 'object'
         ? defaults[name]
-        : !name && typeof defaults === "string"
+        : !name && typeof defaults === 'string'
         ? defaults
         : undefined;
   }
   if (!result) {
-    const fullPath = [tx.$path, name].filter((p) => p).join(".");
+    const fullPath = [tx.$path, name].filter((p) => p).join('.');
     result = `???${fullPath}???`;
   }
   return result;
 }
 
 function ensureValidKeys(values: string | TranslationValues): void {
-  if (typeof values !== "object") {
+  if (typeof values !== 'object') {
     return;
   }
   const keys = Object.keys(values);
@@ -121,7 +113,7 @@ function ensureValidKeys(values: string | TranslationValues): void {
 function setValues(tx: Target, values: string | TranslationValues) {
   ensureValidKeys(values);
   tx.$values = values;
-  if (typeof values === "object") {
+  if (typeof values === 'object') {
     const children = tx.$children;
     if (children) {
       for (const entry of children.entries()) {
@@ -136,7 +128,7 @@ function setValues(tx: Target, values: string | TranslationValues) {
 function setDefaults(tx: Target, defaults: string | TranslationValues) {
   ensureValidKeys(defaults);
   tx.$defaults = defaults;
-  if (typeof defaults === "object") {
+  if (typeof defaults === 'object') {
     const children = tx.$children;
     if (children) {
       for (const entry of children.entries()) {
@@ -157,14 +149,14 @@ function getChild(tx: Target, name: string) {
     const pair = createProxy(tx.$path ? `${tx.$path}.${name}` : name);
     child = pair[1];
     const values = tx.$values;
-    if (values && typeof values === "object") {
+    if (values && typeof values === 'object') {
       const nested = values[name];
       if (nested) {
         setValues(pair[0], nested);
       }
     }
     const defaults = tx.$defaults;
-    if (defaults && typeof defaults === "object") {
+    if (defaults && typeof defaults === 'object') {
       const nested = defaults[name];
       if (nested) {
         setDefaults(pair[0], nested);
