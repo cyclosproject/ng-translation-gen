@@ -33,7 +33,7 @@ const proxyHandler: ProxyHandler<any> = {
       case '$path':
         return () => tx.$path;
       case 'initialized$':
-        return () => tx.initialized$;
+        return tx.initialized$;
       case '$initialize':
         return (values: TranslationValues) => setValues(tx, values);
       case '$defaults':
@@ -87,8 +87,8 @@ function actualValue(tx: Target, name?: string) {
       name && typeof defaults === 'object'
         ? defaults[name]
         : !name && typeof defaults === 'string'
-        ? defaults
-        : undefined;
+          ? defaults
+          : undefined;
   }
   if (!result) {
     const fullPath = [tx.$path, name].filter((p) => p).join('.');
