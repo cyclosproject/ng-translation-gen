@@ -25,7 +25,15 @@ const proxyHandler: ProxyHandler<any> = {
     const value = actualValue(tx);
     return typeof value === 'string' ? replaceArgs(value, args) : value;
   },
-  set() {
+  set(tx: Target, nameOrSymbol, value: unknown) {
+    switch (nameOrSymbol) {
+      case '$values':
+        setValues(tx, value as string | TranslationValues);
+        return true;
+      case '$defaults':
+        setDefaults(tx, value as string | TranslationValues);
+        return true;
+    }
     return false;
   },
   get(tx: Target, nameOrSymbol) {
@@ -118,7 +126,10 @@ function setValues(tx: Target, values: string | TranslationValues) {
     if (children) {
       for (const entry of children.entries()) {
         const name = entry[0];
-        setValues(entry[1], values[name]);
+        const nested = entry[1];
+        if (nested) {
+          setValues(nested, values[name]);
+        }
       }
     }
   }
@@ -133,7 +144,10 @@ function setDefaults(tx: Target, defaults: string | TranslationValues) {
     if (children) {
       for (const entry of children.entries()) {
         const name = entry[0];
-        setDefaults(entry[1], defaults[name]);
+        const nested = entry[1];
+        if (nested) {
+          setDefaults(nested, defaults[name]);
+        }
       }
     }
   }
