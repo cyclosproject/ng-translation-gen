@@ -37,13 +37,13 @@ export class {{metaClassName}} {
     }
   }
 
-  private static _instance = createTranslations() as {{className}};
+  private static INSTANCE = createTranslations() as {{className}};
 
   /**
    * Returns the translations implementation.
    */
   static get(): {{className}} {
-    return {{metaClassName}}._instance;
+    return {{metaClassName}}.INSTANCE;
   }
 
 }
